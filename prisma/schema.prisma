@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  // works with Prisma < 6
+}
+
+model User {
+  id               String  @id @default(uuid())
+  email            String  @unique
+  name             String?
+  emailVerified    Boolean @default(false)
+  image            String?
+  stripeCustomerId String? @unique
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sessions       Session[]
+  accounts       Account[]
+  courses        Course[]
+  enrolment      Enrolment[]
+  lessonProgress LessonProgress[]
+
+  role       String?
+  banned     Boolean?  @default(false)
+  banReason  String?
+  banExpires DateTime?
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  impersonatedBy String?
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+model Course {
+  id               String       @id @default(uuid())
+  title            String
+  description      String
+  fileKey          String
+  price            Int
+  duration         Int
+  level            CourseLevels @default(Beginner)
+  category         String
+  smallDescription String
+  slug             String       @unique
+  status           CourseStatus @default(Draft)
+  isFree           Boolean      @default(false)
+  isFeatured       Boolean      @default(false)
+
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  chapters  Chapter[]
+  enrolment Enrolment[]
+  quizzes   Quiz[]
+}
+
+model Chapter {
+  id       String @id @default(uuid())
+  title    String
+  position Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId  String
+  lessons   Lesson[]
+  quizzes   Quiz[]
+}
+
+model Lesson {
+  id           String @id @default(uuid())
+  title        String
+  description  String
+  thumbnailKey String
+  position     Int
+
+  videoSource VideoSource @default(EMBED)
+  videoKey    String? // uploaded video key
+  embedUrl    String? // youtube embed url
+
+  lessonProgress LessonProgress[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  chapter   Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  chapterId String
+}
+
+model Enrolment {
+  id     String          @id @default(uuid())
+  amount Int
+  status EnrolmentStatus @default(Pending)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId  String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  @@unique([courseId, userId])
+}
+
+model LessonProgress {
+  id        String  @id @default(uuid())
+  completed Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String
+  lesson   Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonId String
+
+  @@unique([userId, lessonId])
+}
+
+model Quiz {
+  id            String @id @default(uuid())
+  title         String
+  googleFormUrl String
+
+  type QuizType
+
+  courseId  String
+  chapterId String? // NULL for course-level quizzes
+
+  isPublished Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  Course          Course?          @relation(fields: [courseId], references: [id])
+  quizSubmissions QuizSubmission[]
+  chapter         Chapter?         @relation(fields: [chapterId], references: [id])
+}
+
+model QuizSubmission {
+  id        String   @id @default(uuid())
+  quizId    String
+  userId    String
+  createdAt DateTime @default(now())
+
+  Quiz Quiz @relation(fields: [quizId], references: [id])
+
+  @@unique([quizId, userId]) // ❗ Prevent multiple attempts
+}
+
+enum CourseLevels {
+  Beginner
+  Intermediate
+  Advanced
+}
+
+enum CourseStatus {
+  Draft
+  Published
+  Archieved
+}
+
+enum EnrolmentStatus {
+  Pending
+  Active
+  Cancelled
+}
+
+enum VideoSource {
+  UPLOAD
+  EMBED
+}
+
+enum QuizType {
+  COURSE
+  CHAPTER
+}
