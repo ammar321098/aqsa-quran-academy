@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -42,30 +44,36 @@ export function NewLessonModal({
       name: "",
       courseId,
       chapterId,
+      videoSource: "EMBED",
+      embedUrl: "https://example.com",
     },
   });
 
-  async function onSubmit(values: LessonSchemaType) {
-    startTransition(async () => {
-      const { data: result, error } = await tryCatch(createLesson(values));
+  function onSubmit(values: LessonSchemaType) {
+    startTransition(() => {
+      (async () => {
+        const { data: result, error } = await tryCatch(createLesson(values));
 
-      if (error) {
-        toast.error("An unexpected error occured. Please try again");
-        return;
-      }
+        console.log("RESULT:", result);
 
-      if (result.status === "success") {
-        toast.success(result.message);
-        form.reset();
-        setIsOpen(false);
-      } else if (result.status === "error") {
-        toast.error(result.message);
-      }
+        if (error) {
+          toast.error("An unexpected error occurred. Please try again");
+          return;
+        }
+
+        if (result?.status === "success") {
+          toast.success(result.message);
+          form.reset();
+          setIsOpen(false);
+        } else if (result?.status === "error") {
+          toast.error(result.message);
+        }
+      })();
     });
   }
 
   function handleOpenChange(open: boolean) {
-    if (!isOpen) {
+    if (!open) {
       form.reset();
     }
     setIsOpen(open);
@@ -81,7 +89,7 @@ export function NewLessonModal({
           New Lesson
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Create New Lesson</DialogTitle>
           <DialogDescription>
@@ -96,7 +104,7 @@ export function NewLessonModal({
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="mx-4 font-bold">Lesson Name</FormLabel>
+                  <FormLabel className="mx-2 font-bold">Lesson Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Enter Lesson Name" {...field} />
                   </FormControl>

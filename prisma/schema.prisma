@@ -9,12 +9,18 @@ datasource db {
 }
 
 model User {
-  id               String  @id @default(uuid())
-  email            String  @unique
-  name             String?
-  emailVerified    Boolean @default(false)
-  image            String?
-  stripeCustomerId String? @unique
+  id            String  @id @default(uuid())
+  email         String? @unique
+  rollNumber    String? @unique
+  password      String? // hashed password
+  name          String?
+  emailVerified Boolean @default(false)
+  image         String?
+
+  isStudent       Boolean @default(false)
+  isTeacher       Boolean @default(false)
+  teacherVerified Boolean @default(false)
+  studentVerified Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -25,10 +31,21 @@ model User {
   enrolment      Enrolment[]
   lessonProgress LessonProgress[]
 
-  role       String?
-  banned     Boolean?  @default(false)
-  banReason  String?
-  banExpires DateTime?
+  role                UserRole           @default(user)
+  banned              Boolean?           @default(false)
+  banExpires          DateTime?
+  banReason           String?
+  classroomsAsTeacher Classroom[]        @relation("TeacherClassrooms")
+  classroomMembers    ClassroomMember[]
+  classroomPosts      ClassroomPost[]
+  classrooms          Classroom[]
+  studentProfile      StudentProfile?
+  teacherProfile      TeacherProfile?
+  department          Department?        @relation(fields: [departmentId], references: [id])
+  departmentId        Int?
+  quizResults         QuizResult[]
+  quizEnrolments      QuizEnrolment[]
+  attendanceRecords   AttendanceRecord[]
 
   @@map("user")
 }
@@ -48,6 +65,7 @@ model Session {
 
   @@unique([token])
   @@index([userId])
+  @@index([token, expiresAt])
   @@map("session")
 }
 
@@ -83,6 +101,14 @@ model Verification {
   @@map("verification")
 }
 
+model CourseCategory {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("course_category")
+}
+
 model Course {
   id               String       @id @default(uuid())
   title            String
@@ -97,6 +123,7 @@ model Course {
   status           CourseStatus @default(Draft)
   isFree           Boolean      @default(false)
   isFeatured       Boolean      @default(false)
+  needsToWorkOn    String? // What do you need to work on for this course?
 
   createdAt DateTime    @default(now())
   updatedAt DateTime    @updatedAt
@@ -105,6 +132,8 @@ model Course {
   chapters  Chapter[]
   enrolment Enrolment[]
   quizzes   Quiz[]
+
+  @@index([status])
 }
 
 model Chapter {
@@ -144,14 +173,17 @@ model Enrolment {
   amount Int
   status EnrolmentStatus @default(Pending)
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  courseId  String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    String
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  course      Course?    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  courseId    String?
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      String
+  classroom   Classroom? @relation(fields: [classroomId], references: [id])
+  classroomId String?
 
   @@unique([courseId, userId])
+  @@unique([classroomId, userId])
 }
 
 model LessonProgress {
@@ -170,34 +202,287 @@ model LessonProgress {
 }
 
 model Quiz {
-  id            String @id @default(uuid())
-  title         String
-  googleFormUrl String
+  id               String  @id @default(uuid())
+  title            String
+  slug             String? @unique // required for standalone quizzes (URL-friendly unique id)
+  googleFormUrl    String? // null = in-app quiz with questions
+  smallDescription String? // short description (standalone)
+  description      String? @db.Text // rich/long description (standalone)
+  thumbnailKey     String? // image key for thumbnail (standalone)
+  totalMarks       Int? // max score for the quiz; null = auto (1 per choice question)
 
   type QuizType
 
-  courseId  String
+  courseId  String?
   chapterId String? // NULL for course-level quizzes
 
   isPublished Boolean @default(false)
+  showCorrect Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  Course          Course?          @relation(fields: [courseId], references: [id])
+  questions       QuizQuestion[]
   quizSubmissions QuizSubmission[]
+  quizEnrolments  QuizEnrolment[]
+  course          Course?          @relation(fields: [courseId], references: [id])
   chapter         Chapter?         @relation(fields: [chapterId], references: [id])
+  classroomPost   ClassroomPost?   @relation(fields: [classroomPostId], references: [id])
+  classroomPostId String?
+  quizResults     QuizResult[]
+  classroom       Classroom?       @relation(fields: [classroomId], references: [id])
+  classroomId     String?
+
+  @@index([type, isPublished])
 }
 
-model QuizSubmission {
+model QuizEnrolment {
   id        String   @id @default(uuid())
   quizId    String
   userId    String
   createdAt DateTime @default(now())
 
-  Quiz Quiz @relation(fields: [quizId], references: [id])
+  quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([quizId, userId]) // ❗ Prevent multiple attempts
+  @@unique([quizId, userId])
+  @@map("quiz_enrolment")
+}
+
+enum QuestionType {
+  SHORT_TEXT
+  LONG_TEXT
+  SINGLE_CHOICE // choose one
+  MULTIPLE_CHOICE // multiple selection
+}
+
+model QuizQuestion {
+  id           String       @id @default(uuid())
+  quizId       String
+  text         String       @db.Text
+  position     Int          @default(0)
+  questionType QuestionType @default(SINGLE_CHOICE)
+
+  quiz    Quiz         @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  options QuizOption[]
+
+  @@map("quiz_question")
+}
+
+model QuizOption {
+  id         String  @id @default(uuid())
+  questionId String
+  text       String  @db.Text
+  isCorrect  Boolean @default(false)
+  position   Int     @default(0)
+
+  question QuizQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@map("quiz_option")
+}
+
+model QuizSubmission {
+  id            String   @id @default(uuid())
+  quizId        String
+  userId        String
+  answers       Json? // stored answers { questionId: optionId | optionId[] | string }
+  questionMarks Json? // admin-assigned marks per question { questionId: number }
+  createdAt     DateTime @default(now())
+
+  Quiz Quiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@unique([quizId, userId]) // Prevent multiple attempts
+}
+
+model Classroom {
+  id          String       @id @default(uuid())
+  title       String
+  slug        String       @unique
+  price       Int
+  description String?
+  status      CourseStatus @default(Draft)
+  isFree      Boolean      @default(false)
+
+  teacherId String
+  teacher   User   @relation("TeacherClassrooms", fields: [teacherId], references: [id])
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  enrolment    Enrolment[]
+  members      ClassroomMember[]
+  posts        ClassroomPost[]
+  user         User?             @relation(fields: [userId], references: [id])
+  userId       String?
+  department   Department?       @relation(fields: [departmentId], references: [id])
+  departmentId Int?
+  quizResults  QuizResult[]
+  attendances  Attendance[]
+  quizes       Quiz[]
+
+  @@index([status])
+}
+
+model ClassroomMember {
+  id String @id @default(uuid())
+
+  classroomId String
+  userId      String
+
+  status ClassroomMemberStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([classroomId, userId])
+}
+
+model ClassroomPost {
+  id          String @id @default(uuid())
+  classroomId String
+  authorId    String
+
+  title   String
+  content String
+  link    String @default("")
+
+  createdAt DateTime @default(now())
+
+  quizes Quiz[]
+
+  classroom Classroom @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+  author    User      @relation(fields: [authorId], references: [id])
+}
+
+model StudentProfile {
+  id       String @id @default(uuid())
+  userId   String @unique
+  fullName String
+  cnic     String @unique
+  phone    String
+  address  String
+
+  verified Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TeacherProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+
+  fullName String
+  cnic     String  @unique
+  phone    String?
+  address  String?
+
+  verified Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Department {
+  id   Int    @id @default(autoincrement())
+  name String
+  code String @unique
+
+  classrooms Classroom[]
+
+  users User[]
+}
+
+model QuizResult {
+  id String @id @default(uuid())
+
+  quizId      String
+  studentId   String
+  classroomId String? // null for standalone quiz results
+
+  totalMarks    Int
+  obtainedMarks Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quiz      Quiz       @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  student   User       @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  classroom Classroom? @relation(fields: [classroomId], references: [id], onDelete: Cascade)
+
+  @@unique([quizId, studentId])
+  @@index([quizId])
+}
+
+model ContactSubmission {
+  id        String   @id @default(uuid())
+  name      String
+  email     String
+  message   String   @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("contact_submission")
+}
+
+model NewsletterSubscription {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("newsletter_subscription")
+}
+
+model Attendance {
+  id        String   @id @default(uuid())
+  classId   String
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  records AttendanceRecord[]
+
+  classroom Classroom @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, date]) // only one attendance per class per day
+}
+
+model AttendanceRecord {
+  id           String @id @default(uuid())
+  attendanceId String
+  studentId    String
+
+  status AttendanceStatus
+
+  attendance Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+  student    User       @relation(fields: [studentId], references: [id])
+
+  @@unique([attendanceId, studentId])
+}
+
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LEAVE
+}
+
+enum UserRole {
+  user
+  student
+  teacher
+  admin
+}
+
+enum ClassroomMemberStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 enum CourseLevels {
@@ -226,4 +511,6 @@ enum VideoSource {
 enum QuizType {
   COURSE
   CHAPTER
+  CLASSROOM
+  STANDALONE
 }

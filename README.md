@@ -20,46 +20,149 @@ This is a scalable **Learning Management System (LMS)** built with **Next.js App
 ## Project Structure
 
 ```txt
-app/
-├── (auth)/
-│   ├── login/
-│   └── verify-request/
-│
-├── (endusers)/
-│   ├── courses/
-│   │   ├── [slug]/
-│   │   └── _components/
-│   └── _components/
-│
-├── admin/
-│   └── courses/
-│       ├── create/
-│       ├── [id]/
-│       │   ├── delete/
-│       │   ├── edit/
-│       │   └── [chapterId]/[lessonId]/
-│       └── _components/
-│
-├── api/
-│   ├── auth/
-│   ├── enrolment/
-│   ├── 2checkout/
-│   └── s3/
-│
-├── dashboard/
-│   ├── [slug]/[lessonId]/
-│   └── _components/
-│
-├── data/
-│   ├── admin/
-│   ├── course/
-│   └── user/
-│
-├── payment/
-│   ├── cancel/
-│   └── success/
-│
-└── profile/
+┣ 📂(auth)
+┃ ┣ 📂login
+┃ ┃ ┣ 📂_components
+┃ ┃ ┃ ┗ 📜page.tsx
+┃ ┃ ┗ 📜page.tsx
+┃ ┣ 📂verify-request
+┃ ┃ ┣ 📂_components
+┃ ┃ ┃ ┗ 📜otp-verification-client.tsx
+┃ ┃ ┗ 📜page.tsx
+┃ ┗ 📜layout.tsx
+┣ 📂(endusers)
+┃ ┣ 📂_compoments
+┃ ┃ ┣ 📜AnimationWraper.tsx
+┃ ┃ ┣ 📜Navbar.tsx
+┃ ┃ ┗ 📜UserDropdown.tsx
+┃ ┣ 📂courses
+┃ ┃ ┣ 📂_components
+┃ ┃ ┃ ┣ 📜CourseContent.tsx
+┃ ┃ ┃ ┣ 📜PublicCourseCard.tsx
+┃ ┃ ┃ ┣ 📜PublicCoursesSkeletonLayout.tsx
+┃ ┃ ┃ ┗ 📜RenderCourses.tsx
+┃ ┃ ┣ 📂[slug]
+┃ ┃ ┃ ┣ 📂_components
+┃ ┃ ┃ ┃ ┗ 📜EnrollmentButton.tsx
+┃ ┃ ┃ ┣ 📜actions.ts
+┃ ┃ ┃ ┗ 📜page.tsx
+┃ ┃ ┗ 📜page.tsx
+┃ ┣ 📜layout.tsx
+┃ ┗ 📜page.tsx
+┣ 📂admin
+┃ ┣ 📂courses
+┃ ┃ ┣ 📂_components
+┃ ┃ ┃ ┣ 📜AdminCourseCard.tsx
+┃ ┃ ┃ ┣ 📜AdminCourseCardSkeletonLayout.tsx
+┃ ┃ ┃ ┗ 📜RenderCourses.tsx
+┃ ┃ ┣ 📂[id]
+┃ ┃ ┃ ┣ 📂[chapterId]
+┃ ┃ ┃ ┃ ┗ 📂[lessonId]
+┃ ┃ ┃ ┃   ┣ 📂_components
+┃ ┃ ┃ ┃   ┃ ┗ 📜LessonForm.tsx
+┃ ┃ ┃ ┃   ┣ 📜actions.ts
+┃ ┃ ┃ ┃   ┗ 📜page.tsx
+┃ ┃ ┃ ┣ 📂delete
+┃ ┃ ┃ ┃ ┣ 📜actions.ts
+┃ ┃ ┃ ┃ ┗ 📜page.tsx
+┃ ┃ ┃ ┗ 📂edit
+┃ ┃ ┃   ┣ 📂_components
+┃ ┃ ┃   ┃ ┣ 📜CourseStructure.tsx
+┃ ┃ ┃   ┃ ┣ 📜DeleteChapter.tsx
+┃ ┃ ┃   ┃ ┣ 📜DeleteLesson.tsx
+┃ ┃ ┃   ┃ ┣ 📜EditCourseForm.tsx
+┃ ┃ ┃   ┃ ┣ 📜NewChapterModel.tsx
+┃ ┃ ┃   ┃ ┗ 📜NewLessonModal.tsx
+┃ ┃ ┃   ┣ 📜actions.ts
+┃ ┃ ┃   ┗ 📜page.tsx
+┃ ┃ ┣ 📂create
+┃ ┃ ┃ ┣ 📜actions.ts
+┃ ┃ ┃ ┗ 📜page.tsx
+┃ ┃ ┗ 📜page.tsx
+┃ ┣ 📂quiz
+┃ ┃ ┗ 📂create
+┃ ┃   ┣ 📜action.ts
+┃ ┃   ┗ 📜page.tsx
+┃ ┣ 📜layout.tsx
+┃ ┗ 📜page.tsx
+┣ 📂api
+┃ ┣ 📂2checkout
+┃ ┃ ┗ 📂webhooks
+┃ ┃   ┗ 📜route.ts
+┃ ┣ 📂admin
+┃ ┃ ┣ 📂chapters
+┃ ┃ ┃ ┗ 📜route.ts
+┃ ┃ ┗ 📂courses
+┃ ┃   ┗ 📜route.ts
+┃ ┣ 📂auth
+┃ ┃ ┗ 📂[...better-auth]
+┃ ┃   ┗ 📜route.ts
+┃ ┣ 📂enrolment
+┃ ┃ ┗ 📂status
+┃ ┃   ┗ 📜route.ts
+┃ ┣ 📂quiz
+┃ ┃ ┗ 📂quiz-submission
+┃ ┃   ┗ 📜route.ts
+┃ ┗ 📂s3
+┃   ┣ 📂delete
+┃   ┃ ┗ 📜route.ts
+┃   ┗ 📂upload
+┃     ┗ 📜route.ts
+┣ 📂dashboard
+┃ ┣ 📂_components
+┃ ┃ ┣ 📜CourseProgressCard.tsx
+┃ ┃ ┣ 📜CourseSidebar.tsx
+┃ ┃ ┣ 📜DashboardAppSidebar.tsx
+┃ ┃ ┣ 📜LessonItem.tsx
+┃ ┃ ┗ 📜StartQuizButton.tsx
+┃ ┣ 📂course
+┃ ┃ ┗ 📂[slug]
+┃ ┃   ┣ 📂[lessonId]
+┃ ┃   ┃ ┣ 📂_components
+┃ ┃   ┃ ┃ ┣ 📜CourseContent.tsx
+┃ ┃   ┃ ┃ ┗ 📜LessonSkeleton.tsx
+┃ ┃   ┃ ┣ 📜actions.ts
+┃ ┃   ┃ ┗ 📜page.tsx
+┃ ┃   ┣ 📜layout.tsx
+┃ ┃   ┗ 📜page.tsx
+┃ ┣ 📂quiz
+┃ ┃ ┗ 📂[quizId]
+┃ ┃   ┣ 📂_componnents
+┃ ┃   ┃ ┗ 📜QuizDashboardPage.tsx
+┃ ┃   ┗ 📜page.tsx
+┃ ┣ 📜layout.tsx
+┃ ┗ 📜page.tsx
+┣ 📂data
+┃ ┣ 📂admin
+┃ ┃ ┣ 📜admin-get-course.ts
+┃ ┃ ┣ 📜admin-get-courses.ts
+┃ ┃ ┣ 📜admin-get-dashboard-stats.ts
+┃ ┃ ┣ 📜admin-get-enrollment-stats.ts
+┃ ┃ ┣ 📜admin-get-lesson.ts
+┃ ┃ ┣ 📜admin-get-recent-courses.ts
+┃ ┃ ┗ 📜require-admin.ts
+┃ ┣ 📂course
+┃ ┃ ┣ 📜get-all-courses.ts
+┃ ┃ ┣ 📜get-course-sidebar-data.ts
+┃ ┃ ┣ 📜get-course.ts
+┃ ┃ ┗ 📜get-lesson-content.ts
+┃ ┗ 📂user
+┃   ┣ 📜get-inrolled-courses.ts
+┃   ┣ 📜require-user.ts
+┃   ┗ 📜user-is-enrolled.ts
+┣ 📂not-admin
+┃ ┗ 📜page.tsx
+┣ 📂payment
+┃ ┣ 📂cancel
+┃ ┃ ┗ 📜page.tsx
+┃ ┗ 📂success
+┃   ┗ 📜page.tsx
+┣ 📂profile
+┃ ┗ 📜page.tsx
+┣ 📜favicon.ico
+┣ 📜globals.css
+┗ 📜layout.tsx
+
 
 components/
 ├── file-uploader/

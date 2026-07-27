@@ -1,60 +1,35 @@
 import HeroSection from "@/components/HeroSection";
 import Highlights from "@/components/Highlights";
-import { Suspense } from "react";
-import AnimationWrapper from "./_compoments/AnimationWraper";
+import FeatureCourses from "@/components/FeatureCourses";
 import VisionMission from "@/components/VisionMission";
-import IndustryExperience from "@/components/IndustryExperience";
+import { getRecentLearningItems } from "@/app/data/learning/get-recent-learning";
+import { getSuccessStats } from "@/app/data/home/get-success-stats";
+// import FeaturedLearners from "@/components/FeaturedLearners";
 import Testimonials from "@/components/Testimonials";
 import StaffCarousel from "@/components/StaffCrousel";
-import ReviewCarousal from "@/components/ReviewsCrousal";
-import { Button } from "@/components/ui/button";
+import ContactSection from "@/components/ContactSection";
+import SuccessStatics from "@/components/SuccessStatics";
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0 },
-};
+// Revalidate every 60s - reduces DB load; homepage stats don't need real-time updates
+export const revalidate = 60;
 
-export default function AqsaQuranAcademyLanding() {
+export default async function AqsaQuranAcademyLanding() {
+  const [recentLearning, successStats] = await Promise.all([
+    getRecentLearningItems(4),
+    getSuccessStats(),
+  ]);
+
   return (
-    <div className="w-full">
-      {/* Header Section */}
+    <div className="w-full min-w-0 overflow-x-hidden">
       <HeroSection />
-      {/* Highlights Section */}
       <Highlights />
-
-      {/* Vision & Mission Section */}
+      <FeatureCourses items={recentLearning} />
       <VisionMission />
-      {/* Industry Experience Section */}
-      <IndustryExperience />
-      {/* Testimonials Section */}
-      <Testimonials />
-      {/* Staff Section */}
+      <SuccessStatics stats={successStats} />
+      {/* <FeaturedLearners /> */}
       <StaffCarousel />
-      {/* Review Crousel Section */}
-      <ReviewCarousal />
-
-      {/* Contact Form */}
-      <section id="contact" className="pb-20">
-        <div className="max-w-6xl mx-auto px-6">
-          <AnimationWrapper>
-            <h3 className="text-3xl font-bold text-center mb-12 text-primary">
-              Get In Touch
-            </h3>
-            <form className="grid gap-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <input className="border p-3 rounded-xl" placeholder="Name" />
-                <input className="border p-3 rounded-xl" placeholder="Email" />
-              </div>
-              <textarea
-                className="border p-3 rounded-xl"
-                placeholder="Message"
-                rows={4}
-              />
-              <Button className="w-50">Send Message</Button>
-            </form>
-          </AnimationWrapper>
-        </div>
-      </section>
+      <Testimonials />
+      <ContactSection />
     </div>
   );
 }

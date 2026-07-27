@@ -17,7 +17,13 @@ export default async function AdminIndexPage() {
     <>
       <SectionCards />
       <div className="px-4 lg:px-6 space-y-6">
-        <ChartAreaInteractive data={enrollmentData} />
+        <Suspense
+          fallback={
+            <div className="h-64 bg-gray-100 rounded-lg animate-pulse" />
+          }
+        >
+          <ChartAreaInteractive data={enrollmentData} />
+        </Suspense>{" "}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Recent Courses</h2>

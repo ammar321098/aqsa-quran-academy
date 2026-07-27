@@ -30,7 +30,7 @@ export function DeleteLesson({
   async function onsubmit() {
     startTransition(async () => {
       const { data: result, error } = await tryCatch(
-        deleteLesson({ chapterId, courseId, lessonId })
+        deleteLesson({ chapterId, courseId, lessonId }),
       );
 
       if (error) {

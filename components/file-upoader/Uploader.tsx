@@ -310,7 +310,8 @@ export function Uploader({ onChange, value, fileTypeAccepted }: iAppProp) {
     <Card
       {...getRootProps()}
       className={cn(
-        "relative border-2 border-dashed transition-colors duration-200 ease-in-out w-full h-50",
+        "relative border-2 border-dashed transition-colors duration-200 ease-in-out w-full max-w-sm overflow-hidden",
+        "min-h-[200px] h-[200px]",
         isDragActive
           ? "border-primary/50 bg-primary/10 border-solid"
           : "border-border hover:border-primary/50"

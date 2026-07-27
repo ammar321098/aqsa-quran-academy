@@ -37,11 +37,12 @@ export async function editCourse(
       return { status: "error", message: "Course not found" };
     }
 
-    // Update course in database
+    const { needsToWorkOn, ...rest } = result.data;
     await prisma.course.update({
       where: { id, userId: user.user.id },
       data: {
-        ...result.data,
+        ...rest,
+        needsToWorkOn: needsToWorkOn ?? null,
       },
     });
 

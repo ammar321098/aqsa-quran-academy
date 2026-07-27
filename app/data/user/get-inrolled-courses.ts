@@ -7,6 +7,7 @@ export async function getEnrolledCourses() {
   const data = await prisma.enrolment.findMany({
     where: { userId: user.id, status: "Active" },
     select: {
+      id: true, // enrolment id
       course: {
         select: {
           id: true,
@@ -18,7 +19,6 @@ export async function getEnrolledCourses() {
           duration: true,
           price: true,
           category: true,
-          // Chapters
           chapters: {
             select: {
               id: true,
@@ -65,19 +65,24 @@ export async function getEnrolledCourses() {
     },
   });
 
-  // Normalize to empty arrays if quizzes are null/undefined
-  const normalizedData = data.map((item: any) => ({
-    course: {
-      ...item.course,
-      quizzes: item.course.quizzes || [],
-      chapters: item.course.chapters.map((ch: any) => ({
-        ...ch,
-        quizzes: ch.quizzes || [],
-      })),
-    },
-  }));
+  // Filter out enrolments with missing courses and normalize quizzes/chapters
+  const normalizedData = data
+    .filter((item) => item.course) // remove null courses
+    .map((item: any) => ({
+      id: item.id, // keep enrolment id
+      course: {
+        ...item.course,
+        quizzes: item.course.quizzes || [],
+        chapters: (item.course.chapters || []).map((ch: any) => ({
+          ...ch,
+          quizzes: ch.quizzes || [],
+        })),
+      },
+    }));
 
   return normalizedData;
 }
 
-export type EnrolledCourseType = Awaited<ReturnType<typeof getEnrolledCourses>>[0];
+export type EnrolledCourseType = Awaited<
+  ReturnType<typeof getEnrolledCourses>
+>[0];

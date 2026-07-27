@@ -7,7 +7,7 @@ import { ApiResponse } from "@/lib/types";
 import { redirect } from "next/navigation";
 
 export async function enrollInCourseAction(
-  courseId: string
+  courseId: string,
 ): Promise<ApiResponse> | never {
   const user = await requireUser();
 
@@ -24,7 +24,7 @@ export async function enrollInCourseAction(
       return { status: "error", message: "Course not found" };
     }
 
-    // ---------- FREE COURSE ----------
+    // FREE COURSE
     if (course.isFree) {
       await prisma.enrolment.upsert({
         where: { courseId_userId: { courseId, userId: user.id } },

@@ -63,7 +63,7 @@ export function NewChapterModal({ courseId }: { courseId: string }) {
   }
 
   function handleOpenChange(open: boolean) {
-    if (!isOpen) {
+    if (!open) {
       form.reset();
     }
     setIsOpen(open);
@@ -95,7 +95,7 @@ export function NewChapterModal({ courseId }: { courseId: string }) {
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="mx-4 font-bold">Chapter Name</FormLabel>
+                  <FormLabel className="mx-2 font-bold">Chapter Name</FormLabel>
                   <FormControl>
                     <Input placeholder="Enter Chapter Name" {...field} />
                   </FormControl>

@@ -70,7 +70,7 @@ export function LessonForm({ chapterId, data, courseId }: iAppProps) {
   async function onSubmit(values: LessonSchemaType) {
     startTransition(async () => {
       const { data: result, error } = await tryCatch(
-        updateLesson(values, data.id)
+        updateLesson(values, data.id),
       );
 
       if (error) {
@@ -119,7 +119,7 @@ export function LessonForm({ chapterId, data, courseId }: iAppProps) {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="mx-4 font-bold">
+                    <FormLabel className="mx-2 font-bold">
                       Lesson Name
                     </FormLabel>
                     <FormControl>
@@ -135,7 +135,7 @@ export function LessonForm({ chapterId, data, courseId }: iAppProps) {
                 name="description"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="mx-4 font-bold">
+                    <FormLabel className="mx-2 font-bold">
                       Description
                     </FormLabel>
                     <FormControl>
@@ -151,7 +151,7 @@ export function LessonForm({ chapterId, data, courseId }: iAppProps) {
                 name="thumbnailKey"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="mx-4 font-bold">
+                    <FormLabel className="mx-2 font-bold">
                       Thumbnail Image
                     </FormLabel>
                     <FormControl>

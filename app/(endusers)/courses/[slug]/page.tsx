@@ -1,7 +1,7 @@
 import { getIndivisualCourse } from "@/app/data/course/get-course";
 import { RenderDescription } from "@/components/rich-text-editor/RenderDescription";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useConstructUrl } from "@/hooks/use-contstruct-url";
@@ -13,10 +13,13 @@ import {
   IconClock,
 } from "@tabler/icons-react";
 import Image from "next/image";
-import { checkIfCourseBought } from "@/app/data/user/user-is-enrolled";
+import { checkIfCourseBoughtOptional } from "@/app/data/user/check-enrollment-optional";
+import { getOptionalUser } from "@/app/data/user/get-optional-user";
 import Link from "next/link";
 import { EnrollmentButton } from "./_components/EnrollmentButton";
 import { CourseContent } from "../_components/CourseContent";
+import Cookies from "js-cookie";
+import { ProtectedLink } from "@/components/general/ProtectedLink";
 
 type Params = Promise<{ slug: string }>;
 
@@ -24,7 +27,10 @@ export default async function SlugPage({ params }: { params: Params }) {
   const { slug } = await params;
   const course = await getIndivisualCourse(slug);
   const thumbnailUrl = useConstructUrl(course.fileKey);
-  const isEnrolled = await checkIfCourseBought(course.id);
+  const [isEnrolled, user] = await Promise.all([
+    checkIfCourseBoughtOptional(course.id),
+    getOptionalUser(),
+  ]);
 
   return (
     <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 mt-10 mb-20 px-4 md:px-6 lg:px-8">
@@ -33,7 +39,9 @@ export default async function SlugPage({ params }: { params: Params }) {
           <Image
             src={thumbnailUrl}
             alt="Thumbnail Image"
-            fill
+            width={600}
+            height={400}
+            style={{ width: "100%", height: "auto" }}
             className="object-cover"
             priority
           />
@@ -59,7 +67,9 @@ export default async function SlugPage({ params }: { params: Params }) {
             </Badge>
             <Badge className="flex items-center gap-1 px-3 py-1">
               <IconClock className="size-4" />
-              <span>{course.duration} Hours</span>
+              <span>
+                {course.duration} {course.duration === 1 ? "Day" : "Days"}
+              </span>
             </Badge>
           </div>
           <Separator className="" />
@@ -79,7 +89,7 @@ export default async function SlugPage({ params }: { params: Params }) {
               {course.chapters.length} Chapters |{" "}
               {course.chapters.reduce(
                 (total: any, chapter: any) => total + chapter.lessons.length,
-                0
+                0,
               ) || 0}{" "}
               Lessons
             </div>
@@ -123,7 +133,8 @@ export default async function SlugPage({ params }: { params: Params }) {
                     <div>
                       <p className="text-sm font-medium">Course Duration</p>
                       <p className="text-sm text-muted-foreground">
-                        {course.duration} Hours
+                        {course.duration}{" "}
+                        {course.duration === 1 ? "Day" : "Days"}
                       </p>
                     </div>
                   </div>
@@ -163,8 +174,9 @@ export default async function SlugPage({ params }: { params: Params }) {
                       <p className="text-sm font-medium">Total Lessons</p>
                       <p className="text-sm text-muted-foreground">
                         {course.chapters.reduce(
-                          (total: any, chapter: any) => total + chapter.lessons.length,
-                          0
+                          (total: any, chapter: any) =>
+                            total + chapter.lessons.length,
+                          0,
                         ) || 0}{" "}
                         Lessons
                       </p>
@@ -199,23 +211,27 @@ export default async function SlugPage({ params }: { params: Params }) {
 
               {/* Enrollment / Buy / Watch Button */}
               {isEnrolled ? (
-                // User already enrolled
                 <Link
                   className={buttonVariants({
                     variant: "outline",
                     className: "w-full",
                   })}
-                  href={`/dashboard/${course.slug}`}
+                  href={`/dashboard/course/${course.slug}`}
                 >
                   Watch Course
                 </Link>
-              ) : (
-                // Free course and user not enrolled
+              ) : user ? (
                 <EnrollmentButton
                   courseId={course.id}
                   isFree={course.isFree}
                   slug={course.slug}
                 />
+              ) : (
+                <ProtectedLink href={`/courses/${course.slug}`}>
+                  <Button className="w-full cursor-pointer">
+                    Login to Enroll
+                  </Button>
+                </ProtectedLink>
               )}
               <p className="mt-5 text-center text-xs text-muted-foreground">
                 30-day money-back guarantee

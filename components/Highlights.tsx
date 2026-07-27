@@ -1,41 +1,41 @@
 "use client";
 
 import AnimationWrapper from "@/app/(endusers)/_compoments/AnimationWraper";
-import { BookOpen, Calendar, Users, Puzzle } from "lucide-react";
+import { BookOpen, GraduationCap, LayoutDashboard, CalendarCheck } from "lucide-react";
 
 const features = [
   {
-    title: "Online Learning Platform",
+    title: "Smart Course Management",
     description:
-      "Following a structured course plan, your teacher will guide and help you learn faster & correctly.",
+      "Create, organize, and manage courses with ease. Upload lessons, videos, PDFs, quizzes, and assignments—all in one place",
+    icon: GraduationCap,
+  },
+  {
+    title: "Teacher-Friendly Dashboard",
+    description:
+      "Teachers can manage classes, take attendance, create quizzes, share announcements, and track student performance in real time",
+    icon: LayoutDashboard,
+  },
+  {
+    title: "Student Learning Portal",
+    description:
+      "Students get a simple, focused dashboard to access courses, submit assignments, attempt quizzes, and track their progress",
     icon: BookOpen,
   },
   {
-    title: "Flexible Schedule",
+    title: "Attendance & Progress Tracking",
     description:
-      "Schedule your Arabic and Quran classes when it works for you! Teachers available 24/7.",
-    icon: Calendar,
-  },
-  {
-    title: "Live Teachers",
-    description:
-      "Qualified teachers guide you live to ensure correct learning and consistent progress.",
-    icon: Users,
-  },
-  {
-    title: "Games & Activities",
-    description:
-      "Interactive games, worksheets, and activities designed for engaging Quran learning.",
-    icon: Puzzle,
+      "Mark daily attendance, monitor learning progress, and generate detailed reports for students and classes",
+    icon: CalendarCheck,
   },
 ];
 
 export default function Highlights() {
   return (
-    <section className="pb-25 dark:bg-black/80 bg-black/10">
+    <section className="pb-25 overflow-x-hidden">
       <AnimationWrapper>
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 rounded-3xl p-10 bg-primary text-primary-foreground dark:bg-primary/90">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 rounded-2xl sm:rounded-3xl p-6 sm:p-10 bg-primary text-primary-foreground dark:bg-primary/90 min-w-0">
             {features.map((feature, index) => {
               const Icon = feature.icon;
               return (

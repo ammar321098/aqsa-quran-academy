@@ -11,13 +11,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  courseCategory,
   courseLevels,
   courseSchema,
   CourseSchemaType,
   courseStatus,
 } from "@/lib/zodSchema";
-import { Loader2, Sparkle, Star, UploadIcon } from "lucide-react";
+import { Loader2, SaveIcon, Sparkle, Star, UploadIcon } from "lucide-react";
 
 import slugify from "slugify";
 import { Textarea } from "@/components/ui/textarea";
@@ -32,13 +31,26 @@ import { RichTextEditor } from "@/components/rich-text-editor/Editor";
 import { Uploader } from "@/components/file-upoader/Uploader";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { tryCatch } from "@/hooks/try-catch";
 import { toast } from "sonner";
 import { editCourse } from "../actions";
 import { AdminCourseSingularType } from "@/app/data/admin/admin-get-course";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { createCourseCategory } from "@/app/admin/course-categories/actions";
+import { Label } from "@/components/ui/label";
+import { PlusIcon } from "lucide-react";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-guard";
+
+type CategoryOption = { id: string; name: string };
 
 interface iAppProps {
   data: AdminCourseSingularType;
@@ -47,6 +59,10 @@ interface iAppProps {
 export function EditCourseForm({ data }: iAppProps) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [categoryPending, setCategoryPending] = useState(false);
 
   const form = useForm<CourseSchemaType>({
     resolver: zodResolver(courseSchema),
@@ -57,7 +73,9 @@ export function EditCourseForm({ data }: iAppProps) {
       price: data.price,
       duration: data.duration,
       level: data.level,
-      category: data.category as CourseSchemaType["category"],
+      category: data.category,
+      needsToWorkOn:
+        (data as { needsToWorkOn?: string | null }).needsToWorkOn ?? "",
       status: data.status,
       slug: data.slug,
       smallDescription: data.smallDescription,
@@ -66,10 +84,41 @@ export function EditCourseForm({ data }: iAppProps) {
     },
   });
 
+  useEffect(() => {
+    fetch("/api/admin/course-categories")
+      .then((res) => res.json())
+      .then((list: CategoryOption[]) => setCategories(list))
+      .catch(console.error);
+  }, []);
+
+  async function handleCreateCategory() {
+    if (!newCategoryName.trim()) return;
+    setCategoryPending(true);
+    const { data: result, error } = await tryCatch(
+      createCourseCategory(newCategoryName.trim()),
+    );
+    setCategoryPending(false);
+    if (error) {
+      toast.error("Something went wrong");
+      return;
+    }
+    if (result?.status === "success") {
+      const res = await fetch("/api/admin/course-categories");
+      const list = await res.json();
+      setCategories(list);
+      form.setValue("category", newCategoryName.trim());
+      setNewCategoryName("");
+      setCategoryDialogOpen(false);
+      toast.success(result.message);
+    } else {
+      toast.error(result?.message ?? "Failed");
+    }
+  }
+
   function onSubmit(values: CourseSchemaType) {
     startTransition(async () => {
       const { data: result, error } = await tryCatch(
-        editCourse(values, data.id)
+        editCourse(values, data.id),
       );
 
       if (error) {
@@ -88,6 +137,9 @@ export function EditCourseForm({ data }: iAppProps) {
       }
     });
   }
+
+  const isDirty = form.formState.isDirty;
+  useUnsavedChangesGuard({ isDirty });
   return (
     <Form {...form}>
       <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
@@ -97,7 +149,7 @@ export function EditCourseForm({ data }: iAppProps) {
           name="title"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="mx-4 font-bold">Course Title</FormLabel>
+              <FormLabel className="mx-2 font-bold">Course Title</FormLabel>
               <FormControl>
                 <Input placeholder="Enter Course Title" {...field} />
               </FormControl>
@@ -113,9 +165,9 @@ export function EditCourseForm({ data }: iAppProps) {
             name="slug"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel className="mx-4 font-bold">Course Slug</FormLabel>
+                <FormLabel className="mx-2 font-bold">Course Slug</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter Course Slug" {...field} />
+                  <Input readOnly placeholder="Enter Course Slug" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -125,8 +177,12 @@ export function EditCourseForm({ data }: iAppProps) {
             type="button"
             onClick={() => {
               const tileValue = form.getValues("title");
-              const slug = slugify(tileValue);
-              form.setValue("slug", slug, { shouldValidate: true });
+              const slug = slugify(tileValue, {
+                lower: true,
+              });
+              form.setValue("slug", slug, {
+                shouldValidate: true,
+              });
             }}
             className="hover:cursor-pointer"
           >
@@ -140,7 +196,7 @@ export function EditCourseForm({ data }: iAppProps) {
           name="smallDescription"
           render={({ field }) => (
             <FormItem className="w-full">
-              <FormLabel className="mx-4 font-bold">
+              <FormLabel className="mx-2 font-bold">
                 Small Description
               </FormLabel>
               <FormControl>
@@ -161,7 +217,7 @@ export function EditCourseForm({ data }: iAppProps) {
           name="description"
           render={({ field }) => (
             <FormItem className="w-full">
-              <FormLabel className="mx-4 font-bold">Description</FormLabel>
+              <FormLabel className="mx-2 font-bold">Description</FormLabel>
               <FormControl>
                 <RichTextEditor field={field} />
               </FormControl>
@@ -176,7 +232,7 @@ export function EditCourseForm({ data }: iAppProps) {
           name="fileKey"
           render={({ field }) => (
             <FormItem className="w-full">
-              <FormLabel className="mx-4 font-bold">Thumbnail Image </FormLabel>
+              <FormLabel className="mx-2 font-bold">Thumbnail Image </FormLabel>
               <FormControl>
                 <Uploader
                   onChange={field.onChange}
@@ -195,23 +251,78 @@ export function EditCourseForm({ data }: iAppProps) {
             name="category"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel className="mx-4 font-bold">
-                  Course Category{" "}
+                <FormLabel className="mx-2 font-bold">
+                  Course Category
                 </FormLabel>
-                <Select value={field.value} onValueChange={field.onChange}>
-                  <FormControl>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select Category" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {courseCategory.map((cat) => (
-                      <SelectItem key={cat} value={cat}>
-                        {cat}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2">
+                  <Select value={field.value} onValueChange={field.onChange}>
+                    <FormControl>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Select or create category" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          {cat.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Dialog
+                    open={categoryDialogOpen}
+                    onOpenChange={setCategoryDialogOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="outline">
+                        <PlusIcon className="h-4 w-4 mr-1" />
+                        New
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Create category</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4 pt-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="edit-new-cat-name">Name</Label>
+                          <Input
+                            id="edit-new-cat-name"
+                            value={newCategoryName}
+                            onChange={(e) => setNewCategoryName(e.target.value)}
+                            placeholder="e.g. Tafseer"
+                          />
+                        </div>
+                        <Button
+                          onClick={handleCreateCategory}
+                          disabled={categoryPending || !newCategoryName.trim()}
+                        >
+                          {categoryPending ? "Creating…" : "Create"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="needsToWorkOn"
+            render={({ field }) => (
+              <FormItem className="w-full md:col-span-2">
+                <FormLabel className="mx-2 font-bold">
+                  What do you need to work on for this course?
+                </FormLabel>
+                <FormControl>
+                  <Textarea
+                    placeholder="e.g. Recitation practice, memorization, understanding tafseer"
+                    className="min-h-20"
+                    {...field}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
@@ -222,7 +333,7 @@ export function EditCourseForm({ data }: iAppProps) {
             name="level"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel className="mx-4 font-bold">Course Level </FormLabel>
+                <FormLabel className="mx-2 font-bold">Course Level </FormLabel>
                 <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
                     <SelectTrigger className="w-full">
@@ -247,14 +358,14 @@ export function EditCourseForm({ data }: iAppProps) {
             name="duration"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="mx-4 font-bold">
-                  Course Duration (Hour(s))
+                <FormLabel className="mx-2 font-bold">
+                  Course Duration (Days)
                 </FormLabel>
                 <FormControl>
                   <Input
                     type="number"
                     min={1}
-                    placeholder="Enter Course Duration"
+                    placeholder="Enter duration in days"
                     value={field.value}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                   />
@@ -271,7 +382,7 @@ export function EditCourseForm({ data }: iAppProps) {
                 name="price"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="mx-4 font-bold">
+                    <FormLabel className="mx-2 font-bold">
                       Course Price (Rs.)
                     </FormLabel>
                     <FormControl>
@@ -346,7 +457,7 @@ export function EditCourseForm({ data }: iAppProps) {
           name="status"
           render={({ field }) => (
             <FormItem className="w-full">
-              <FormLabel className="mx-4 font-bold">Course Status </FormLabel>
+              <FormLabel className="mx-2 font-bold">Course Status </FormLabel>
               <Select value={field.value} onValueChange={field.onChange}>
                 <FormControl>
                   <SelectTrigger className="w-full">
@@ -402,7 +513,7 @@ export function EditCourseForm({ data }: iAppProps) {
             </>
           ) : (
             <>
-              Update Course <UploadIcon size={16} />
+              Update Course <SaveIcon />
             </>
           )}
         </Button>

@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import {
-  courseCategory,
   courseLevels,
   courseSchema,
   CourseSchemaType,
@@ -46,18 +45,34 @@ import {
 } from "@/components/ui/select";
 import { RichTextEditor } from "@/components/rich-text-editor/Editor";
 import { Uploader } from "@/components/file-upoader/Uploader";
-import { useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { tryCatch } from "@/hooks/try-catch";
 import { CreateCourse } from "./actions";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useConfetti } from "@/hooks/use-confetti";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { createCourseCategory } from "@/app/admin/course-categories/actions";
+import { Label } from "@/components/ui/label";
+import { useUnsavedChangesGuard } from "@/hooks/use-unsaved-guard";
+
+type CategoryOption = { id: string; name: string };
 
 export default function CourseCreationPage() {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { triggerConfetti } = useConfetti();
+  const [categories, setCategories] = useState<CategoryOption[]>([]);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [categoryPending, setCategoryPending] = useState(false);
 
   const form = useForm<CourseSchemaType>({
     resolver: zodResolver(courseSchema),
@@ -68,7 +83,8 @@ export default function CourseCreationPage() {
       price: 0,
       duration: 1,
       level: "Beginner",
-      category: "Education",
+      category: "",
+      needsToWorkOn: "",
       status: "Draft",
       slug: "",
       smallDescription: "",
@@ -76,6 +92,37 @@ export default function CourseCreationPage() {
       isFeatured: false,
     },
   });
+
+  useEffect(() => {
+    fetch("/api/admin/course-categories")
+      .then((res) => res.json())
+      .then((data: CategoryOption[]) => setCategories(data))
+      .catch(console.error);
+  }, []);
+
+  async function handleCreateCategory() {
+    if (!newCategoryName.trim()) return;
+    setCategoryPending(true);
+    const { data, error } = await tryCatch(
+      createCourseCategory(newCategoryName.trim()),
+    );
+    setCategoryPending(false);
+    if (error) {
+      toast.error("Something went wrong");
+      return;
+    }
+    if (data?.status === "success") {
+      const res = await fetch("/api/admin/course-categories");
+      const list = await res.json();
+      setCategories(list);
+      form.setValue("category", newCategoryName.trim());
+      setNewCategoryName("");
+      setCategoryDialogOpen(false);
+      toast.success(data.message);
+    } else {
+      toast.error(data?.message ?? "Failed");
+    }
+  }
 
   function onSubmit(values: CourseSchemaType) {
     startTransition(async () => {
@@ -99,6 +146,9 @@ export default function CourseCreationPage() {
       }
     });
   }
+
+  const isDirty = form.formState.isDirty;
+  useUnsavedChangesGuard({ isDirty });
 
   return (
     <>
@@ -132,7 +182,7 @@ export default function CourseCreationPage() {
                 name="title"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="mx-4 font-bold">
+                    <FormLabel className="mx-2 font-bold">
                       Course Title
                     </FormLabel>
                     <FormControl>
@@ -150,11 +200,15 @@ export default function CourseCreationPage() {
                   name="slug"
                   render={({ field }) => (
                     <FormItem className="w-full">
-                      <FormLabel className="mx-4 font-bold">
+                      <FormLabel className="mx-2 font-bold">
                         Course Slug
                       </FormLabel>
                       <FormControl>
-                        <Input placeholder="Enter Course Slug" {...field} />
+                        <Input
+                          readOnly
+                          placeholder="Enter Course Slug"
+                          {...field}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -164,7 +218,7 @@ export default function CourseCreationPage() {
                   type="button"
                   onClick={() => {
                     const tileValue = form.getValues("title");
-                    const slug = slugify(tileValue);
+                    const slug = slugify(tileValue, { lower: true });
                     form.setValue("slug", slug, { shouldValidate: true });
                   }}
                   className="hover:cursor-pointer"
@@ -179,7 +233,7 @@ export default function CourseCreationPage() {
                 name="smallDescription"
                 render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel className="mx-4 font-bold">
+                    <FormLabel className="mx-2 font-bold">
                       Small Description
                     </FormLabel>
                     <FormControl>
@@ -200,7 +254,7 @@ export default function CourseCreationPage() {
                 name="description"
                 render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel className="mx-4 font-bold">
+                    <FormLabel className="mx-2 font-bold">
                       Description
                     </FormLabel>
                     <FormControl>
@@ -217,7 +271,7 @@ export default function CourseCreationPage() {
                 name="fileKey"
                 render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel className="mx-4 font-bold">
+                    <FormLabel className="mx-2 font-bold">
                       Thumbnail Image{" "}
                     </FormLabel>
                     <FormControl>
@@ -238,26 +292,85 @@ export default function CourseCreationPage() {
                   name="category"
                   render={({ field }) => (
                     <FormItem className="w-full">
-                      <FormLabel className="mx-4 font-bold">
-                        Course Category{" "}
+                      <FormLabel className="mx-2 font-bold">
+                        Course Category
                       </FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select Category" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {courseCategory.map((cat) => (
-                            <SelectItem key={cat} value={cat}>
-                              {cat}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="flex gap-2">
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Select or create category" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {categories.map((cat) => (
+                              <SelectItem key={cat.id} value={cat.name}>
+                                {cat.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Dialog
+                          open={categoryDialogOpen}
+                          onOpenChange={setCategoryDialogOpen}
+                        >
+                          <DialogTrigger asChild>
+                            <Button type="button" variant="outline">
+                              <PlusIcon className="h-4 w-4 mr-1" />
+                              New
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Create category</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 pt-2">
+                              <div className="space-y-2">
+                                <Label htmlFor="new-cat-name">Name</Label>
+                                <Input
+                                  id="new-cat-name"
+                                  value={newCategoryName}
+                                  onChange={(e) =>
+                                    setNewCategoryName(e.target.value)
+                                  }
+                                  placeholder="e.g. Tafseer"
+                                />
+                              </div>
+                              <Button
+                                onClick={handleCreateCategory}
+                                disabled={
+                                  categoryPending || !newCategoryName.trim()
+                                }
+                              >
+                                {categoryPending ? "Creating…" : "Create"}
+                              </Button>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="needsToWorkOn"
+                  render={({ field }) => (
+                    <FormItem className="w-full md:col-span-2">
+                      <FormLabel className="mx-2 font-bold">
+                        What do you need to work on for this course?
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="e.g. Recitation practice, memorization, understanding tafseer"
+                          className="min-h-20"
+                          {...field}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -268,7 +381,7 @@ export default function CourseCreationPage() {
                   name="level"
                   render={({ field }) => (
                     <FormItem className="w-full">
-                      <FormLabel className="mx-4 font-bold">
+                      <FormLabel className="mx-2 font-bold">
                         Course Level{" "}
                       </FormLabel>
                       <Select
@@ -298,14 +411,14 @@ export default function CourseCreationPage() {
                   name="duration"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="mx-4 font-bold">
-                        Course Duration (Hour(s))
+                      <FormLabel className="mx-2 font-bold">
+                        Course Duration (Days)
                       </FormLabel>
                       <FormControl>
                         <Input
                           type="number"
                           min={1}
-                          placeholder="Enter Course Duration"
+                          placeholder="Enter duration in days"
                           value={field.value}
                           onChange={(e) =>
                             field.onChange(Number(e.target.value))
@@ -324,7 +437,7 @@ export default function CourseCreationPage() {
                       name="price"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="mx-4 font-bold">
+                          <FormLabel className="mx-2 font-bold">
                             Course Price (Rs.)
                           </FormLabel>
                           <FormControl>
@@ -403,7 +516,7 @@ export default function CourseCreationPage() {
                 name="status"
                 render={({ field }) => (
                   <FormItem className="w-full">
-                    <FormLabel className="mx-4 font-bold">
+                    <FormLabel className="mx-2 font-bold">
                       Course Status{" "}
                     </FormLabel>
                     <Select value={field.value} onValueChange={field.onChange}>
@@ -453,7 +566,7 @@ export default function CourseCreationPage() {
               <Button
                 type="submit"
                 disabled={isPending}
-                className="font-bold hover:cursor-pointer"
+                className="font-bold w-full"
               >
                 {isPending ? (
                   <>

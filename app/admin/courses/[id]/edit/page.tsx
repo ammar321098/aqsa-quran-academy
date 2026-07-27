@@ -10,9 +10,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EditCourseForm } from "./_components/EditCourseForm";
 import { CourseStructure } from "./_components/CourseStructure";
 import Link from "next/link";
-import { ArrowLeftIcon } from "lucide-react";
+import { ArrowLeftIcon, Edit, SquareStackIcon } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Suspense } from "react";
+import { FaStackOverflow } from "react-icons/fa";
 
 type Params = Promise<{ id: string }>;
 
@@ -40,8 +41,13 @@ export default async function EditRoute({ params }: { params: Params }) {
       {/* tabs section here */}
       <Tabs defaultValue="basic-info" className="mt-6 mx-10">
         <TabsList className="grid grid-cols-2 w-full">
-          <TabsTrigger value="basic-info">Basic Information </TabsTrigger>
-          <TabsTrigger value="course-structure">Course Structure</TabsTrigger>
+          <TabsTrigger value="basic-info">
+            {" "}
+            <Edit /> Basic Information
+          </TabsTrigger>
+          <TabsTrigger value="course-structure">
+            <SquareStackIcon /> Course Structure
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="basic-info">
           <Card>
@@ -59,7 +65,7 @@ export default async function EditRoute({ params }: { params: Params }) {
         <TabsContent value="course-structure">
           <Card>
             <CardHeader>
-              <CardTitle>Edit Course Structure</CardTitle>
+              <CardTitle> Edit Course Structure</CardTitle>
               <CardDescription>
                 Edit & update structure of this perticulat course.
               </CardDescription>

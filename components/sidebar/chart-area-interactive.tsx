@@ -23,41 +23,6 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-const chartData = [
-  { date: "2024-05-15", enrollments: 12 },
-  { date: "2024-05-16", enrollments: 8 },
-  { date: "2024-05-17", enrollments: 20 },
-  { date: "2024-05-18", enrollments: 2 },
-  { date: "2024-05-19", enrollments: 15 },
-  { date: "2024-05-20", enrollments: 22 },
-  { date: "2024-05-21", enrollments: 18 },
-  { date: "2024-05-22", enrollments: 10 },
-  { date: "2024-05-23", enrollments: 25 },
-  { date: "2024-05-24", enrollments: 30 },
-  { date: "2024-05-25", enrollments: 28 },
-  { date: "2024-05-26", enrollments: 14 },
-  { date: "2024-05-27", enrollments: 9 },
-  { date: "2024-05-28", enrollments: 16 },
-  { date: "2024-05-29", enrollments: 21 },
-  { date: "2024-05-30", enrollments: 19 },
-  { date: "2024-05-31", enrollments: 24 },
-  { date: "2024-06-01", enrollments: 27 },
-  { date: "2024-06-02", enrollments: 13 },
-  { date: "2024-06-03", enrollments: 17 },
-  { date: "2024-06-04", enrollments: 26 },
-  { date: "2024-06-05", enrollments: 31 },
-  { date: "2024-06-06", enrollments: 29 },
-  { date: "2024-06-07", enrollments: 22 },
-  { date: "2024-06-08", enrollments: 11 },
-  { date: "2024-06-09", enrollments: 15 },
-  { date: "2024-06-10", enrollments: 20 },
-  { date: "2024-06-11", enrollments: 18 },
-  { date: "2024-06-12", enrollments: 23 },
-  { date: "2024-06-13", enrollments: 27 },
-  { date: "2024-06-14", enrollments: 34 },
-  { date: "2024-06-15", enrollments: 30 },
-];
-
 interface ChartAreaInteractiveProps {
   data: { date: string; enrollments: number }[];
 }

@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { IconDashboard, IconListDetails } from "@tabler/icons-react";
+import {
+  IconCalendar,
+  IconDashboard,
+  IconListDetails,
+  IconReport,
+  IconUsersGroup,
+} from "@tabler/icons-react";
 
 import { NavUser } from "@/components/sidebar/nav-user";
 import {
@@ -25,8 +31,28 @@ const navMain = [
   },
   {
     title: "Courses",
-    url: "/courses",
+    url: "/dashboard/courses",
     icon: IconListDetails,
+  },
+  {
+    title: "Quizzes",
+    url: "/dashboard/quizzes",
+    icon: IconListDetails,
+  },
+  {
+    title: "Classes",
+    url: "/dashboard/classes",
+    icon: IconUsersGroup,
+  },
+  {
+    title: "Results",
+    url: "/dashboard/results",
+    icon: IconReport,
+  },
+  {
+    title: "Attendance",
+    url: "/dashboard/attendance",
+    icon: IconCalendar,
   },
 ];
 
@@ -42,7 +68,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             >
               <Link href="/">
                 <Image
-                  src="/aqsaeducomp.png"
+                  src="/aqsaquranac.png"
                   width={36}
                   height={36}
                   alt="logo"

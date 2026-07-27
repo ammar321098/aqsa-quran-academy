@@ -56,17 +56,23 @@ export function RenderUploadedState({
   fileType: "image" | "video";
 }) {
   return (
-    <div className="relative group w-full h-full flex items-center justify-center">
+    <div className="relative group w-full h-full flex items-center justify-center min-h-0">
       {fileType === "video" ? (
-        <video src={previewUrl} controls className="rounded-md w-full h-full" />
+        <video src={previewUrl} controls className="rounded-md w-full h-full object-contain max-h-full" />
       ) : (
-        <Image src={previewUrl} alt="Uploaded File" fill className="p-2" />
+        <Image
+          src={previewUrl}
+          alt="Uploaded File"
+          fill
+          className="p-2 object-contain"
+          sizes="(max-width: 384px) 100vw, 384px"
+        />
       )}
       <Button
         type="button"
         variant="destructive"
         size="icon"
-        className={cn("absolute top-4 right-4 hover:cursor-pointer")}
+        className={cn("absolute top-2 right-2 hover:cursor-pointer size-8")}
         onClick={handleRemovFile}
         disabled={isDeleting}
       >

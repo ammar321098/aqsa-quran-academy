@@ -25,17 +25,18 @@ export function CourseProgressCard({ data }: CourseProgressCardProps) {
     <Card className="group relative py-0 gap-0">
       <Badge className="absolute top-2 right-2 z-10">{data.course.level}</Badge>
       <Image
-        width={600}
+        width={0}
         height={400}
         src={thumbnailUrl}
         alt="Thumbnail Image"
         className="w-full rounded-t-xl aspect-video h-full object-cover"
+        style={{ width: "100%", height: "auto" }}
       />
 
       <CardContent className="p-4">
         <Link
           className="font-medium text-lg line-clamp-2 hover:underline group-hover:text-primary transition-colors"
-          href={`/dashboard/${data.course.slug}`}
+          href={`/dashboard/course/${data.course.slug}`}
         >
           {data.course.title}
         </Link>

@@ -6,7 +6,6 @@ import { enrollInCourseAction } from "../actions";
 import { tryCatch } from "@/hooks/try-catch";
 import { toast } from "sonner";
 import { useConfetti } from "@/hooks/use-confetti";
-import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface Props {
@@ -26,17 +25,12 @@ export function EnrollmentButton({ courseId, isFree, slug }: Props) {
         enrollInCourseAction(courseId)
       );
 
-      if (error) {
-        toast.error("Unexpected error occured. Please try again later");
-        return;
-      }
-
-      if (result.status === "success") {
-        router.push(`/dashboard/${slug}`);
+      if (result?.status === "success") {
+        router.push(`/dashboard/course/${slug}`);
         toast.success(result.message);
         triggerConfetti();
-      } else if (result.status === "error") {
-        toast.error(result.message);
+      } else if (result?.status === "error") {
+        toast.error(result?.message);
       }
     });
   }

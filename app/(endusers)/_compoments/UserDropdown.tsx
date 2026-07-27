@@ -9,25 +9,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User, Book, LayoutDashboard, LogOut, ChevronDown } from "lucide-react";
+import { User, LayoutDashboard, LogOut, ChevronDown } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
-import { toast } from "sonner";
 import { useSignout } from "@/hooks/use-signout";
 
 interface UserDropdownProps {
   name?: string;
   email?: string;
   image?: string;
+  role: string;
 }
 
 export function UserDropdown({
   name = "User Name",
-  email = "user@example.com",
+  email,
   image,
+  role,
 }: UserDropdownProps) {
-  const router = useRouter();
   const handleSignOut = useSignout();
 
   return (
@@ -71,21 +69,17 @@ export function UserDropdown({
 
         <DropdownMenuItem asChild>
           <Link
-            href="/courses"
-            className="flex items-center gap-2 hover:cursor-pointer"
-          >
-            <Book className="w-4 h-4" />
-            Courses
-          </Link>
-        </DropdownMenuItem>
-
-        <DropdownMenuItem asChild>
-          <Link
-            href="/admin"
+            href={
+              role === "admin"
+                ? "/admin"
+                : role === "teacher"
+                  ? "/teacher"
+                  : "/dashboard"
+            }
             className="flex items-center gap-2 hover:cursor-pointer"
           >
             <LayoutDashboard className="w-4 h-4" />
-            Admin Dashboard
+            {`${role.charAt(0).toUpperCase() + role.slice(1)} Dashboard `}
           </Link>
         </DropdownMenuItem>
 

@@ -1,93 +1,50 @@
 "use client";
 
 import { useState } from "react";
-import { motion } from "framer-motion";
 import Image from "next/image";
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
+import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import AnimationWrapper from "@/app/(endusers)/_compoments/AnimationWraper";
 
-// data/testimonials.js
-export const testimonials = [
-  {
-    id: 1,
-    name: "Alan Abdulla",
-    role: "UX Designer",
-    image: "/avatar.jpeg",
-    text: "Hear from our learners who have transformed their knowledge and skills with our courses. From mastering new concepts to achieving real-world results, our students share their experiences and how our courses helped them grow professionally and personally.",
-  },
-  {
-    id: 2,
-    name: "Sarah Khan",
-    role: "Product Manager",
-    image: "/avatar.jpeg",
-    text: "Hear from our learners who have transformed their knowledge and skills with our courses. From mastering new concepts to achieving real-world results, our students share their experiences and how our courses helped them grow professionally and personally.",
-  },
-  {
-    id: 3,
-    name: "John Smith",
-    role: "Developer",
-    image: "/avatar.jpeg",
-    text: "Hear from our learners who have transformed their knowledge and skills with our courses. From mastering new concepts to achieving real-world results, our students share their experiences and how our courses helped them grow professionally and personally.",
-  },
-  {
-    id: 4,
-    name: "Ayesha Noor",
-    role: "Founder",
-    image: "/avatar.jpeg",
-    text: "Hear from our learners who have transformed their knowledge and skills with our courses. From mastering new concepts to achieving real-world results, our students share their experiences and how our courses helped them grow professionally and personally.",
-  },
-  {
-    id: 5,
-    name: "David Lee",
-    role: "CEO",
-    image: "/avatar.jpeg",
-    text: "Hear from our learners who have transformed their knowledge and skills with our courses. From mastering new concepts to achieving real-world results, our students share their experiences and how our courses helped them grow professionally and personally.",
-  },
+const testimonials = [
+  { id: 1, name: "Dr Khalid", role: "Student", image: "/avatar.jpeg", rating: 5, text: "Aqsa Quran Academy has transformed my Quran recitation. The teachers are patient and knowledgeable. I started as a complete beginner and now I can read fluently. Highly recommend to anyone who wants to learn properly." },
+  { id: 2, name: "Ahmed Hussain", role: "Parent", image: "/avatar.jpeg", rating: 5, text: "My children have been learning with Aqsa Academy for over a year. The structured courses and live classes have helped them progress so much. As a parent, I appreciate the qualified teachers and the focus on authentic Islamic values." },
+  { id: 3, name: "Fatima Ali", role: "Student", image: "/girlavatar.png", rating: 5, text: "The online format makes it easy to learn from home. The teachers explain Tajweed beautifully and the course materials are well organized. I feel more connected to the Quran than ever before." },
 ];
 
-const CARD_WIDTH = 400;
-const GAP = 5;
+const CARD_WIDTH = 380;
+const GAP = 24;
 
-export default function TestimonialsCarousel() {
-  const [active, setActive] = useState(0);
+export default function Testimonials() {
+  const [active, setActive] = useState(1);
 
-  const total = testimonials.length;
-
-  const next = () => setActive((prev) => (prev + 1) % total);
-  const prev = () => setActive((prev) => (prev - 1 + total) % total);
+  const next = () => setActive((prev) => (prev + 1) % testimonials.length);
+  const prev = () => setActive((prev) => (prev - 1 + testimonials.length) % testimonials.length);
 
   return (
-    <section className="py-20 overflow-hidden bg-muted-foreground/20">
+    <section className="py-16 md:py-20 bg-background overflow-x-hidden">
       <AnimationWrapper>
-        {/* Heading */}
-        <div className="text-center mb-5">
-          <h3 className="text-4xl font-bold text-center text-primary">
+        <div className="text-center mb-10 px-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-primary">
             Our Testimonials
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400 mt-3 max-w-xl mx-auto">
-            What our clients say about us
+          </h2>
+          <p className="text-muted-foreground mt-2">
+            What our clients say about us.
           </p>
         </div>
 
-        {/* Carousel */}
-        <div className="relative flex items-center justify-center">
-          {/* Prev */}
+        <div className="relative flex items-center justify-center min-h-[320px] overflow-x-hidden">
           <button
             onClick={prev}
-            className="absolute top-5 left-85 z-20 text-4xl dark:text-gray-300 dark:bg-accent-foreground/30 bg-white rounded-full p-2 hover:scale-110"
+            className="absolute left-4 md:left-8 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background border border-border shadow-md hover:bg-background hover:text-foreground transition"
+            aria-label="Previous testimonial"
           >
-            <ChevronLeftIcon className="size-5" />
+            <ChevronLeft className="h-5 w-5" />
           </button>
 
-          <div className="relative h-80 w-full max-w-6xl">
+          <div className="relative w-full max-w-5xl mx-auto h-[320px] flex items-start justify-center">
             {testimonials.map((item, index) => {
-              // Distance from active card
-              let offset = index - active;
-
-              // Infinite loop fix
-              if (offset > total / 2) offset -= total;
-              if (offset < -total / 2) offset += total;
-
+              const offset = index - active;
               const isActive = offset === 0;
 
               return (
@@ -95,44 +52,51 @@ export default function TestimonialsCarousel() {
                   key={item.id}
                   animate={{
                     x: offset * (CARD_WIDTH + GAP),
-                    scale: isActive ? 1.2 : 0.85,
-                    opacity: Math.abs(offset) > 2 ? 0 : 1,
+                    scale: isActive ? 1 : 0.9,
+                    opacity: Math.abs(offset) > 1 ? 0 : 1,
                     zIndex: isActive ? 10 : 5 - Math.abs(offset),
                   }}
                   transition={{ type: "spring", stiffness: 260, damping: 30 }}
-                  className={`absolute left-1/2 bottom-0 -translate-x-1/2 w-105 p-8 shadow-xl transition-colors`}
+                  className="absolute left-1/2 top-0 w-[90vw] max-w-[380px] -translate-x-1/2"
                 >
-                  <div className={`${isActive ? "-translate-y-1/5" : ""}`}>
-                    <p
-                      className={`text-sm leading-relaxed ${
-                        isActive
-                          ? "text-white text-xs bg-primary flex flex-col justify-end rounded-2xl p-4 pb-10 leading-relaxed text-center"
-                          : "bg-gray-200 dark:bg-muted-foreground/30 text-gray-700 dark:text-gray-300 leading-relaxed text-center pb-10 rounded-2xl p-4"
-                      }`}
-                    >
-                      {item.text.slice(0, 150)}
-                    </p>
-
-                    <div className="flex flex-col items-center -mt-5">
+                  <div
+                    className={`rounded-2xl p-6 md:p-8 shadow-lg ${
+                      isActive
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-card border border-border text-foreground"
+                    }`}
+                  >
+                    <p className="text-sm leading-relaxed mb-6">{item.text}</p>
+                    <div className="flex gap-1 mb-4">
+                      {Array.from({ length: 5 }).map((_, i) => (
+                        <Star
+                          key={i}
+                          className={`h-5 w-5 ${
+                            isActive
+                              ? i < item.rating
+                                ? "fill-primary-foreground text-primary-foreground"
+                                : "text-primary-foreground/40"
+                              : i < item.rating
+                                ? "fill-amber-400 text-amber-400"
+                                : "text-muted-foreground"
+                          }`}
+                        />
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-3">
                       <Image
-                        width={14}
-                        height={14}
                         src={item.image}
-                        alt="avatar"
-                        className={`w-14 h-14 rounded-full border-2 ${
-                          isActive
-                            ? "border-primary"
-                            : "border-gray-200 dark:border-muted-foreground/30"
-                        }`}
+                        alt={item.name}
+                        width={48}
+                        height={48}
+                        className="rounded-full border-2 border-white/50"
                       />
-                      <h4
-                        className={`font-semibold mt-1 ${
-                          isActive ? "text-primary" : ""
-                        }`}
-                      >
-                        {item.name}
-                      </h4>
-                      <span className="text-xs opacity-70">{item.role}</span>
+                      <div>
+                        <p className="font-semibold">{item.name}</p>
+                        <p className={`text-sm ${isActive ? "opacity-90" : "text-muted-foreground"}`}>
+                          {item.role}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </motion.div>
@@ -140,12 +104,12 @@ export default function TestimonialsCarousel() {
             })}
           </div>
 
-          {/* Next */}
           <button
             onClick={next}
-            className="absolute top-5 right-85 z-20 text-4xl bg-white dark:text-gray-300 dark:bg-accent-foreground/30 rounded-full p-2 hover:scale-110"
+            className="absolute right-4 md:right-8 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background border border-border shadow-md hover:bg-background hover:text-foreground transition"
+            aria-label="Next testimonial"
           >
-            <ChevronRightIcon className="size-5" />
+            <ChevronRight className="h-5 w-5" />
           </button>
         </div>
       </AnimationWrapper>

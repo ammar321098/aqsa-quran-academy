@@ -17,6 +17,8 @@ export async function getAllCourses() {
       smallDescription: true,
       price: true,
       isFree: true,
+      isFeatured: true,
+      createdAt: true,
     },
     orderBy: {
       createdAt: "desc",
