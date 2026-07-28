@@ -3,7 +3,6 @@
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import { classroomSchema, ClassroomSchemaType } from "@/lib/zodSchema";
-import { ClassroomMemberStatus, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export async function editClassroom(data: ClassroomSchemaType, id: string) {
@@ -51,12 +50,12 @@ export async function editClassroom(data: ClassroomSchemaType, id: string) {
         },
       },
       update: {
-        status: ClassroomMemberStatus.APPROVED,
+        status: "APPROVED",
       },
       create: {
         classroomId: id,
         userId: result.data.teacherId,
-        status: ClassroomMemberStatus.APPROVED,
+        status: "APPROVED",
       },
     });
 

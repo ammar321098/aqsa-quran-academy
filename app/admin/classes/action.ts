@@ -5,8 +5,6 @@ import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/app/data/admin/require-admin";
 import { ApiResponse } from "@/lib/types";
 import { revalidatePath } from "next/cache";
-import { ClassroomMemberStatus, UserRole } from "@prisma/client";
-
 export async function createClassroom(data: {
   name: string;
   slug: string;
@@ -44,7 +42,7 @@ export async function createClassroom(data: {
       data: {
         classroomId: classroom.id,
         userId: session.user.id,
-        status: ClassroomMemberStatus.APPROVED,
+        status: "APPROVED",
       },
     });
   });

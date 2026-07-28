@@ -3,11 +3,33 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const SEED = {
+  adminEmail: "ammaryounas0001@gmail.com",
+  adminName: "Ammar Younas",
   departmentCodes: ["QS", "IS"] as const,
   courseSlugs: ["quran-tajweed-basics", "quran-memorization-hifz", "arabic-for-quran"] as const,
   classroomSlugs: ["evening-tajweed-class", "weekend-hifz-circle"] as const,
   standaloneQuizSlug: "general-quran-knowledge",
 };
+
+async function seedAdminUser() {
+  const admin = await prisma.user.upsert({
+    where: { email: SEED.adminEmail },
+    update: {
+      role: "admin",
+      name: SEED.adminName,
+      emailVerified: true,
+    },
+    create: {
+      email: SEED.adminEmail,
+      name: SEED.adminName,
+      role: "admin",
+      emailVerified: true,
+    },
+  });
+
+  console.log(`✓ Admin user: ${admin.email}`);
+  return admin;
+}
 
 async function resolveUsers() {
   const users = await prisma.user.findMany({
@@ -24,6 +46,7 @@ async function resolveUsers() {
   }
 
   const admin =
+    users.find((u) => u.email === SEED.adminEmail) ??
     users.find((u) => u.role === "admin") ??
     users.find((u) => u.email?.includes("admin")) ??
     users[0];
@@ -616,10 +639,12 @@ async function seedContactAndNewsletter() {
 }
 
 async function main() {
-  console.log("🌱 Seeding database (all tables except User)...\n");
+  console.log("🌱 Seeding database...\n");
+
+  await seedAdminUser();
 
   const { admin, teacher, student, student2 } = await resolveUsers();
-  console.log(`Using existing users:
+  console.log(`Using users:
   - Admin:   ${admin.email ?? admin.rollNumber ?? admin.id}
   - Teacher: ${teacher.email ?? teacher.rollNumber ?? teacher.id}
   - Student: ${student.email ?? student.rollNumber ?? student.id}
@@ -662,7 +687,7 @@ async function main() {
   console.log("  QuizOption, QuizSubmission, QuizEnrolment, QuizResult, Classroom,");
   console.log("  ClassroomMember, ClassroomPost, Attendance, AttendanceRecord,");
   console.log("  ContactSubmission, NewsletterSubscription");
-  console.log("\nSkipped: User, Session, Account, Verification (auth tables)");
+  console.log("\nAuth tables: seeded admin User; skipped Session, Account, Verification");
 }
 
 main()
